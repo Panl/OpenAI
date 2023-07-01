@@ -35,7 +35,11 @@ final public class OpenAI: OpenAIProtocol {
     }
     
     private let session: URLSessionProtocol
-    private var streamingSessions: [NSObject] = []
+    private var streamingSessions: [StreamingProtocol&NSObject] = []
+
+    private var currentStream: StreamingProtocol? {
+        streamingSessions.last
+    }
     
     public let configuration: Configuration
 
@@ -162,6 +166,11 @@ extension OpenAI {
         } catch {
             completion?(error)
         }
+    }
+
+    public func cancelAllStreamingRequests() {
+        streamingSessions.forEach { $0.cancel() }
+        streamingSessions.removeAll()
     }
 }
 

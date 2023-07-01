@@ -10,7 +10,12 @@ import Foundation
 import FoundationNetworking
 #endif
 
-final class StreamingSession<ResultType: Codable>: NSObject, Identifiable, URLSessionDelegate, URLSessionDataDelegate {
+protocol StreamingProtocol {
+    func perform()
+    func cancel()
+}
+
+final class StreamingSession<ResultType: Codable>: NSObject, Identifiable, URLSessionDelegate, URLSessionDataDelegate, StreamingProtocol {
     
     enum StreamingError: Error {
         case unknownContent
@@ -27,15 +32,21 @@ final class StreamingSession<ResultType: Codable>: NSObject, Identifiable, URLSe
         let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
         return session
     }()
+
+    public private(set) var sessionTask: URLSessionDataTask?
     
     init(urlRequest: URLRequest) {
         self.urlRequest = urlRequest
     }
     
     func perform() {
-        self.urlSession
+        sessionTask = self.urlSession
             .dataTask(with: self.urlRequest)
-            .resume()
+        sessionTask?.resume()
+    }
+
+    func cancel() {
+        sessionTask?.cancel()
     }
     
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
